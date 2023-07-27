@@ -8,22 +8,21 @@ import { api } from "~/utils/api";
 const TABS = ["Recent", "Following"] as const;
 
 const Home: NextPage = () => {
-  const session = useSession();
   const [selectedTab, setSelectedTab] =
     useState<(typeof TABS)[number]>("Recent");
-
+  const session = useSession();
   return (
     <>
       <header className="sticky top-0 z-10 border-b bg-white pt-2">
         <h1 className="mb-2 px-4 text-lg font-bold">Home</h1>
-        {session.status == "authenticated" && (
+        {session.status === "authenticated" && (
           <div className="flex">
             {TABS.map((tab) => {
               return (
                 <button
                   key={tab}
                   className={`flex-grow p-2 hover:bg-gray-200 focus-visible:bg-gray-200 ${
-                    tab == selectedTab
+                    tab === selectedTab
                       ? "border-b-4 border-b-blue-500 font-bold"
                       : ""
                   }`}
@@ -37,7 +36,7 @@ const Home: NextPage = () => {
         )}
       </header>
       <NewTweetForm />
-      {selectedTab == "Recent" ? <RecentTweets /> : <FollowingTweets />}
+      {selectedTab === "Recent" ? <RecentTweets /> : <FollowingTweets />}
     </>
   );
 };
@@ -45,7 +44,7 @@ const Home: NextPage = () => {
 function RecentTweets() {
   const tweets = api.tweet.infiniteFeed.useInfiniteQuery(
     {},
-    { getNextPageParam: (lastPage) => lastPage.nextCusor }
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
   );
 
   return (
@@ -62,7 +61,7 @@ function RecentTweets() {
 function FollowingTweets() {
   const tweets = api.tweet.infiniteFeed.useInfiniteQuery(
     { onlyFollowing: true },
-    { getNextPageParam: (lastPage) => lastPage.nextCusor }
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
   );
 
   return (

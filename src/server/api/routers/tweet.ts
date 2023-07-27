@@ -1,17 +1,16 @@
-//import { noInlineConfig } from ".eslintrc.cjs";
-
 import { type Prisma } from "@prisma/client";
 import { type inferAsyncReturnType } from "@trpc/server";
-import { string, z } from "zod";
+import { z } from "zod";
+
 import {
-  type createTRPCContext,
   createTRPCRouter,
-  protectedProcedure,
   publicProcedure,
+  protectedProcedure,
+  type createTRPCContext,
 } from "~/server/api/trpc";
 
 export const tweetRouter = createTRPCRouter({
-  infititeProfileFeed: publicProcedure
+  infiniteProfileFeed: publicProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -19,7 +18,7 @@ export const tweetRouter = createTRPCRouter({
         cursor: z.object({ id: z.string(), createdAt: z.date() }).optional(),
       })
     )
-    .query(async ({ input: { limit = 10, cursor, userId }, ctx }) => {
+    .query(async ({ input: { limit = 10, userId, cursor }, ctx }) => {
       return await getInfiniteTweets({
         limit,
         ctx,
@@ -36,7 +35,7 @@ export const tweetRouter = createTRPCRouter({
       })
     )
     .query(
-      async ({ input: { limit = 10, cursor, onlyFollowing = false }, ctx }) => {
+      async ({ input: { limit = 10, onlyFollowing = false, cursor }, ctx }) => {
         const currentUserId = ctx.session?.user.id;
         return await getInfiniteTweets({
           limit,
@@ -60,15 +59,19 @@ export const tweetRouter = createTRPCRouter({
         data: { content, userId: ctx.session.user.id },
       });
 
+      void ctx.revalidateSSG?.(`/profiles/${ctx.session.user.id}`);
+
       return tweet;
     }),
   toggleLike: protectedProcedure
-    .input(z.object({ id: string() }))
+    .input(z.object({ id: z.string() }))
     .mutation(async ({ input: { id }, ctx }) => {
       const data = { tweetId: id, userId: ctx.session.user.id };
+
       const existingLike = await ctx.prisma.like.findUnique({
         where: { userId_tweetId: data },
       });
+
       if (existingLike == null) {
         await ctx.prisma.like.create({ data });
         return { addedLike: true };
@@ -80,12 +83,12 @@ export const tweetRouter = createTRPCRouter({
 });
 
 async function getInfiniteTweets({
-  ctx,
-  cursor,
   whereClause,
+  ctx,
   limit,
+  cursor,
 }: {
-  whereClause: Prisma.TweetWhereInput;
+  whereClause?: Prisma.TweetWhereInput;
   limit: number;
   cursor: { id: string; createdAt: Date } | undefined;
   ctx: inferAsyncReturnType<typeof createTRPCContext>;
@@ -104,15 +107,17 @@ async function getInfiniteTweets({
       _count: { select: { likes: true } },
       likes:
         currentUserId == null ? false : { where: { userId: currentUserId } },
-      user: { select: { name: true, id: true, image: true } },
+      user: {
+        select: { name: true, id: true, image: true },
+      },
     },
   });
 
-  let nextCusor: typeof cursor | undefined;
+  let nextCursor: typeof cursor | undefined;
   if (data.length > limit) {
     const nextItem = data.pop();
     if (nextItem != null) {
-      nextCusor = { id: nextItem.id, createdAt: nextItem.createdAt };
+      nextCursor = { id: nextItem.id, createdAt: nextItem.createdAt };
     }
   }
 
@@ -127,6 +132,6 @@ async function getInfiniteTweets({
         likedByMe: tweet.likes?.length > 0,
       };
     }),
-    nextCusor,
+    nextCursor,
   };
 }
