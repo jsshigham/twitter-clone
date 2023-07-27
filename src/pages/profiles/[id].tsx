@@ -14,6 +14,7 @@ import { VscArrowLeft } from "react-icons/vsc";
 import ProfileImage from "~/components/ProfileImage";
 import InfiniteTweetList from "~/components/InfiniteTweetList";
 import Button from "~/components/Button";
+import { useSession } from "next-auth/react";
 
 const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   id,
@@ -24,6 +25,21 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
     { getNextPageParam: (lastPage) => lastPage.nextCusor }
   );
 
+  const trpcUtils = api.useContext();
+  const toggleFollow = api.profile.toggleFollow.useMutation({
+    onSuccess: ({ addedFollow }) => {
+      trpcUtils.profile.getById.setData({ id }, (oldData) => {
+        if (oldData == null) return;
+
+        const countModifier = addedFollow ? 1 : -1;
+        return {
+          ...oldData,
+          isFollowing: addedFollow,
+          followersCount: oldData.followersCount + countModifier,
+        };
+      });
+    },
+  });
   if (profile?.name == null) {
     return <ErrorPage statusCode={404} />;
   }
