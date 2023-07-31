@@ -11,12 +11,12 @@ interface Tweet {
   id: string;
   content: string;
   createdAt: Date;
-  likes: number;
-  user: { name: string | null; id: string; image: string | null };
+  likeCount: number;
   likedByMe: boolean;
+  user: { id: string; image: string | null; name: string | null };
 }
 
-interface InfiniteTweetProps {
+interface InfiniteTweetListProps {
   isLoading: boolean;
   isError: boolean;
   hasMore: boolean | undefined;
@@ -30,7 +30,7 @@ function InfiniteTweetList({
   isLoading,
   hasMore = false,
   fetchNewTweets,
-}: InfiniteTweetProps) {
+}: InfiniteTweetListProps) {
   if (isLoading) return <LoadingSpinner />;
   if (isError) return <h1>Error</h1>;
 
@@ -43,7 +43,7 @@ function InfiniteTweetList({
   return (
     <ul>
       <InfiniteScroll
-        dataLength={tweets.length} //This is important field to render the next data
+        dataLength={tweets.length}
         next={fetchNewTweets}
         hasMore={hasMore}
         loader={<LoadingSpinner />}
@@ -60,7 +60,14 @@ const dateTimeFormatter = Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
 });
 
-function TweetCard({ id, content, createdAt, likes, user, likedByMe }: Tweet) {
+function TweetCard({
+  id,
+  content,
+  createdAt,
+  likeCount,
+  user,
+  likedByMe,
+}: Tweet) {
   const trpcUtils = api.useContext();
   const toggleLike = api.tweet.toggleLike.useMutation({
     onSuccess: ({ addedLike }) => {
@@ -80,7 +87,7 @@ function TweetCard({ id, content, createdAt, likes, user, likedByMe }: Tweet) {
                 if (tweet.id === id) {
                   return {
                     ...tweet,
-                    likes: tweet.likeCount + countModifier,
+                    likeCount: tweet.likeCount + countModifier,
                     likedByMe: addedLike,
                   };
                 }
@@ -95,7 +102,7 @@ function TweetCard({ id, content, createdAt, likes, user, likedByMe }: Tweet) {
         { onlyFollowing: true },
         updateData
       );
-      trpcUtils.tweet.infititeProfileFeed.setInfiniteData(
+      trpcUtils.tweet.infiniteProfileFeed.setInfiniteData(
         { userId: user.id },
         updateData
       );
@@ -129,7 +136,7 @@ function TweetCard({ id, content, createdAt, likes, user, likedByMe }: Tweet) {
           onClick={handleToggleLike}
           isLoading={toggleLike.isLoading}
           likedByMe={likedByMe}
-          likeCount={likes}
+          likeCount={likeCount}
         />
       </div>
     </li>
