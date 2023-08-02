@@ -36,10 +36,12 @@ function SideNav() {
           <li>
             <IconHoverEffect>
               <span className="flex items-center gap-4">
-                <VscSignIn className="h-8 w-8 fill-green-700" />
-                <span className="hidden text-lg text-green-700 md:inline">
-                  <button onClick={() => void signIn()}>Sign In</button>
-                </span>
+                <button onClick={() => void signIn()}>
+                  <VscSignIn className="h-8 w-8 fill-green-700" />
+                  <span className="hidden text-lg text-green-700 md:inline">
+                    Sign In
+                  </span>
+                </button>
               </span>
             </IconHoverEffect>
           </li>
@@ -47,10 +49,12 @@ function SideNav() {
           <li>
             <IconHoverEffect>
               <span className="flex items-center gap-4">
-                <VscSignOut className="h-8 w-8 fill-red-500" />
-                <span className="hidden text-lg text-red-500 md:inline">
-                  <button onClick={() => void signOut()}>Sign Out</button>
-                </span>
+                <button onClick={() => void signOut()}>
+                  <VscSignOut className="h-8 w-8 fill-red-500" />
+                  <span className="hidden text-lg text-red-500 md:inline">
+                    Sign Out
+                  </span>
+                </button>
               </span>
             </IconHoverEffect>
           </li>
